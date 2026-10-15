@@ -59,7 +59,17 @@ builder.Services.AddAuthorization();
 
 
 
+
+
 var app = builder.Build();
+
+app.MapPost("/api/newOrder", async (Pr3GlebOmaContext context, Order order) => {
+    
+    context.Orders.Add(order);
+    await context.SaveChangesAsync();
+    return Results.Created($"/api/orders/{order.Id}", order);
+}).RequireAuthorization(policy => policy.RequireAuthenticatedUser()); ;
+
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -127,3 +137,4 @@ string CreateToken(User account)
 }
 
 public record LoginRequest(string Login, string Password);
+
