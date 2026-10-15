@@ -21,6 +21,23 @@ app.MapGet("/api/Clothes/search", (string name, Pr3GlebOmaContext context) =>
 
     return Results.Ok(foundClothes);
 });
+// 3. Метод регистрации нового пользователя
+app.MapPost("/api/Users/register", (User newUser, Pr3GlebOmaContext context) =>
+{
+    var defaultRole = context.Roles.FirstOrDefault(r => r.Name == "User");
+    if (defaultRole == null) return Results.BadRequest("Роль 'Пользователь' не найдена в БД.");
+
+    newUser.RoleId = defaultRole.Id;
+
+    
+    var hasher = new PasswordHasher<User>();
+    newUser.Password = hasher.HashPassword(newUser, newUser.Password);
+
+    context.Users.Add(newUser);
+    context.SaveChanges();
+
+    return Results.Ok("Регистрация успешна!");
+});
 
 
 app.Run();
