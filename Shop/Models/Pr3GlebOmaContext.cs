@@ -19,7 +19,13 @@ public partial class Pr3GlebOmaContext : DbContext
 
     public virtual DbSet<Clothe> Clothes { get; set; }
 
+    public virtual DbSet<ClothesSize> ClothesSizes { get; set; }
+
     public virtual DbSet<Order> Orders { get; set; }
+
+    public virtual DbSet<OrderItem> OrderItems { get; set; }
+
+    public virtual DbSet<Role> Roles { get; set; }
 
     public virtual DbSet<Size> Sizes { get; set; }
 
@@ -27,63 +33,123 @@ public partial class Pr3GlebOmaContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Data Source=bd-kip.fa.ru;Initial Catalog=Pr3GlebOma;User ID=sa;Password=1qaz!QAZ;Trust Server Certificate=True");
+        => optionsBuilder.UseSqlServer("Data Source=bd-kip.fa.ru;Initial Catalog=Pr3_OmaGleb;User ID=sa;Password=1qaz!QAZ; Trust Server Certificate = True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Clothe>(entity =>
         {
-            entity.Property(e => e.Id).ValueGeneratedNever();
-            entity.Property(e => e.Description).IsRequired();
+            entity.HasKey(e => e.Id).HasName("PK__Clothes__3214EC07B6036AE4");
+
+            entity.Property(e => e.Available).HasDefaultValue(true);
             entity.Property(e => e.Name)
                 .IsRequired()
-                .HasMaxLength(50);
-            entity.Property(e => e.Type).IsRequired();
+                .HasMaxLength(150);
+            entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Type)
+                .IsRequired()
+                .HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<ClothesSize>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__ClothesS__3214EC07F08D04C1");
+
+            entity.HasIndex(e => new { e.ClothesId, e.SizeId }, "UQ_Clothes_Size").IsUnique();
+
+            entity.HasOne(d => d.Clothes).WithMany(p => p.ClothesSizes)
+                .HasForeignKey(d => d.ClothesId)
+                .HasConstraintName("FK__ClothesSi__Cloth__59063A47");
+
+            entity.HasOne(d => d.Size).WithMany(p => p.ClothesSizes)
+                .HasForeignKey(d => d.SizeId)
+                .HasConstraintName("FK__ClothesSi__SizeI__59FA5E80");
         });
 
         modelBuilder.Entity<Order>(entity =>
         {
-            entity.Property(e => e.Id).ValueGeneratedNever();
-            entity.Property(e => e.DateTime).HasColumnType("datetime");
+            entity.HasKey(e => e.Id).HasName("PK__Orders__3214EC07016AC344");
+
+            entity.Property(e => e.DateTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
             entity.Property(e => e.Status)
                 .IsRequired()
-                .HasMaxLength(50);
-
-            entity.HasOne(d => d.Clothes).WithMany(p => p.Orders)
-                .HasForeignKey(d => d.ClothesId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Orders_Clothes");
-
-            entity.HasOne(d => d.Size).WithMany(p => p.Orders)
-                .HasForeignKey(d => d.SizeId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Orders_Size");
+                .HasMaxLength(50)
+                .HasDefaultValue("Новый");
 
             entity.HasOne(d => d.User).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Orders_Users");
+                .HasConstraintName("FK__Orders__UserId__5EBF139D");
+        });
+
+        modelBuilder.Entity<OrderItem>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__OrderIte__3214EC072CF34250");
+
+            entity.Property(e => e.Quantity).HasDefaultValue(1);
+
+            entity.HasOne(d => d.Clothes).WithMany(p => p.OrderItems)
+                .HasForeignKey(d => d.ClothesId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__OrderItem__Cloth__6383C8BA");
+
+            entity.HasOne(d => d.Order).WithMany(p => p.OrderItems)
+                .HasForeignKey(d => d.OrderId)
+                .HasConstraintName("FK__OrderItem__Order__628FA481");
+
+            entity.HasOne(d => d.Size).WithMany(p => p.OrderItems)
+                .HasForeignKey(d => d.SizeId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__OrderItem__SizeI__6477ECF3");
+        });
+
+        modelBuilder.Entity<Role>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Roles__3214EC07DE613FEF");
+
+            entity.HasIndex(e => e.Name, "UQ__Roles__737584F6A797F8B1").IsUnique();
+
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(50);
         });
 
         modelBuilder.Entity<Size>(entity =>
         {
+            entity.HasKey(e => e.Id).HasName("PK__Size__3214EC07E7E3B782");
+
             entity.ToTable("Size");
 
-            entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.SizeLetter)
                 .IsRequired()
-                .HasMaxLength(50);
+                .HasMaxLength(10);
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.Property(e => e.Id).ValueGeneratedNever();
-            entity.Property(e => e.Address).IsRequired();
+            entity.HasKey(e => e.Id).HasName("PK__Users__3214EC07973019E0");
+
+            entity.HasIndex(e => e.Login, "UQ__Users__5E55825B247D1270").IsUnique();
+
+            entity.Property(e => e.Address)
+                .IsRequired()
+                .HasMaxLength(500);
             entity.Property(e => e.Login)
                 .IsRequired()
                 .HasMaxLength(50);
-            entity.Property(e => e.Password).IsRequired();
-            entity.Property(e => e.Phone).IsRequired();
+            entity.Property(e => e.Password)
+                .IsRequired()
+                .HasMaxLength(128);
+            entity.Property(e => e.Phone)
+                .IsRequired()
+                .HasMaxLength(20);
+
+            entity.HasOne(d => d.Role).WithMany(p => p.Users)
+                .HasForeignKey(d => d.RoleId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__Users__RoleId__4E88ABD4");
         });
 
         OnModelCreatingPartial(modelBuilder);

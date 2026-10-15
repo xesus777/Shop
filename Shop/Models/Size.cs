@@ -13,7 +13,7 @@ public partial class Size
 
     public int SizeNumber { get; set; }
 
-    public int Count { get; set; }
+    public virtual ICollection<ClothesSize> ClothesSizes { get; set; } = new List<ClothesSize>();
 
-    public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
+    public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 }

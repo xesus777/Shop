@@ -19,7 +19,19 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[ClothesSizes]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[OrderItems]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[Orders]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Roles]",
          "ObjectType": 0
       },
       {
