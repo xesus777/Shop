@@ -11,6 +11,8 @@ public partial class Clothe
 
     public string Name { get; set; }
 
+    public decimal Price { get; set; }
+
     public string Description { get; set; }
 
     public int PurchaseCount { get; set; }
@@ -19,5 +21,7 @@ public partial class Clothe
 
     public bool Available { get; set; }
 
-    public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
+    public virtual ICollection<ClothesSize> ClothesSizes { get; set; } = new List<ClothesSize>();
+
+    public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 }
