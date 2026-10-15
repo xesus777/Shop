@@ -80,6 +80,17 @@ app.MapPut("/api/editCountBySize", async (Pr3GlebOmaContext context, OrderItem o
 }).RequireAuthorization(policy => policy.RequireAuthenticatedUser().RequireRole("2"));
 
 
+app.MapDelete("/api/delOrders/{id}", async (Pr3GlebOmaContext context, int id) =>
+{
+    Clothe? clothe = context.Clothes.FirstOrDefault(u => u.Id == id);
+
+    if (clothe == null) return Results.NotFound(new { message = "no" });
+
+    context.Clothes.Remove(clothe);
+    await context.SaveChangesAsync();
+    return Results.Json(clothe);
+}).RequireAuthorization(policy => policy.RequireAuthenticatedUser().RequireRole("2"));
+
 app.UseAuthentication();
 app.UseAuthorization();
 
