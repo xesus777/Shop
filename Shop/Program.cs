@@ -14,7 +14,7 @@ var hasher = new PasswordHasher<User>();
 
 var users = new List<User>
 {
-    new() { Id = 1, Phone = "89265424450", Address = "Moscow", Login = "student", RoleId = 2 },
+    new() { Id = 1, Phone = "89265424450", Address = "Moscow", Login = "adm", RoleId = 2 },
     new() { Id = 2, Phone = "89265424450", Address = "Moscow", Login = "student", RoleId = 1 },
     new() { Id = 3, Phone = "89265424450", Address = "Moscow", Login = "student", RoleId = 1 }
     
@@ -68,7 +68,16 @@ app.MapPost("/api/newOrder", async (Pr3GlebOmaContext context, Order order) => {
     context.Orders.Add(order);
     await context.SaveChangesAsync();
     return Results.Created($"/api/orders/{order.Id}", order);
-}).RequireAuthorization(policy => policy.RequireAuthenticatedUser()); ;
+}).RequireAuthorization(policy => policy.RequireAuthenticatedUser());
+
+
+app.MapPut("/api/editCountBySize", async (Pr3GlebOmaContext context, OrderItem orderItemData) => {
+    var order = context.OrderItems.FirstOrDefault(u => u.SizeId == orderItemData.SizeId);
+    if (order == null) return Results.NotFound(new { message = "no" });
+    order.Quantity = orderItemData.Quantity;
+    await context.SaveChangesAsync();
+    return Results.Json(order);
+}).RequireAuthorization(policy => policy.RequireAuthenticatedUser().RequireRole("2"));
 
 
 app.UseAuthentication();
