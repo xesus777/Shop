@@ -48,7 +48,7 @@ app.MapGet("/api/Orders/{StatusId}", async (Pr3GlebOmaContext context, int Statu
     return Results.Json(order);
 }).RequireAuthorization(policy => policy.RequireAuthenticatedUser());
 
-app.MapGet("/api/OrdersByUserId"са4/{UserId}", async (Pr3GlebOmaContext context, int UserId) =>
+app.MapGet("/api/OrdersByUserId/{UserId}", async (Pr3GlebOmaContext context, int UserId) =>
 {
     Order? order = await context.Orders.FirstOrDefaultAsync(u => u.Id == UserId);
     if (order == null)
