@@ -14,15 +14,15 @@ var hasher = new PasswordHasher<User>();
 
 var users = new List<User>
 {
-    new() { Id = 1, Phone = "89265424450", Address = "Moscow", Login = "adm", RoleId = 2 },
-    new() { Id = 2, Phone = "89265424450", Address = "Moscow", Login = "student", RoleId = 1 },
-    new() { Id = 3, Phone = "89265424450", Address = "Moscow", Login = "student", RoleId = 1 }
+    new() { Id = 1, Phone = "89265424450", DeliveryAddress = "Moscow", Login = "adm", RoleId = 1 },
+    new() { Id = 2, Phone = "89265424450", DeliveryAddress = "Moscow", Login = "student", RoleId = 2 },
+    new() { Id = 3, Phone = "89265424450", DeliveryAddress = "Moscow", Login = "student", RoleId = 2 }
     
 };
 
 foreach (var user in users)
 {
-    user.Password = hasher.HashPassword(user, "123");
+    user.PasswordHash = hasher.HashPassword(user, "123");
 }
 
 
@@ -71,25 +71,45 @@ app.MapPost("/api/newOrder", async (Pr3GlebOmaContext context, Order order) => {
 }).RequireAuthorization(policy => policy.RequireAuthenticatedUser());
 
 
-app.MapPut("/api/editCountBySize", async (Pr3GlebOmaContext context, OrderItem orderItemData) => {
-    var order = context.OrderItems.FirstOrDefault(u => u.SizeId == orderItemData.SizeId);
+app.MapPut("/api/editCountBySize/{ClotheId}&{SizeId}&{Quantity}", async (Pr3GlebOmaContext context, int ClotheId, int SizeId, int Quantity) => {
+    var order = context.OrderItems.FirstOrDefault(u=>u.ClothingId == ClotheId && u.SizeId == SizeId);
     if (order == null) return Results.NotFound(new { message = "no" });
-    order.Quantity = orderItemData.Quantity;
+    order.Quantity=Quantity;
     await context.SaveChangesAsync();
     return Results.Json(order);
-}).RequireAuthorization(policy => policy.RequireAuthenticatedUser().RequireRole("2"));
+}).RequireAuthorization(policy => policy.RequireAuthenticatedUser().RequireRole("1"));
 
+app.MapPut("/api/editStatusByOrderId/{OrderId}&{StatusId}", async (Pr3GlebOmaContext context, int OrderId, int StatusId) => {
+    var order = context.Orders.FirstOrDefault(u => u.Id == OrderId);
+    if (order == null) return Results.NotFound(new { message = "no" });
+    order.StatusId = StatusId;
+    await context.SaveChangesAsync();
+    return Results.Json(order);
+}).RequireAuthorization(policy => policy.RequireAuthenticatedUser().RequireRole("1"));
 
-app.MapPut("/api/delOrders/{id}", async (Pr3GlebOmaContext context, int id) =>
+app.MapPut("/api/delTovar/{id}", async (Pr3GlebOmaContext context, int id) =>
 {
-    Clothe? clothe = context.Clothes.FirstOrDefault(u => u.Id == id);
+    Clothing? clothe = context.Clothings.FirstOrDefault(u => u.Id == id);
 
     if (clothe == null) return Results.NotFound(new { message = "no" });
 
-    clothe.Available = false;
+    clothe.IsAvailable = false;
     await context.SaveChangesAsync();
     return Results.Json(clothe);
-}).RequireAuthorization(policy => policy.RequireAuthenticatedUser().RequireRole("2"));
+}).RequireAuthorization(policy => policy.RequireAuthenticatedUser().RequireRole("1"));
+
+app.MapPut("/api/backTovar/{id}", async (Pr3GlebOmaContext context, int id) =>
+{
+    Clothing? clothe = context.Clothings.FirstOrDefault(u => u.Id == id);
+
+    if (clothe == null) return Results.NotFound(new { message = "no" });
+
+    clothe.IsAvailable = true;
+    await context.SaveChangesAsync();
+    return Results.Json(clothe);
+}).RequireAuthorization(policy => policy.RequireAuthenticatedUser().RequireRole("1"));
+
+app.MapGet("/api/orders/{id}", (Pr3GlebOmaContext context) => Results.Json(context.Orders)).RequireAuthorization(policy => policy.RequireAuthenticatedUser().RequireRole("1"));
 
 
 
@@ -109,7 +129,7 @@ app.MapPost("/api/auth/login", (LoginRequest request) =>
         return Results.Challenge();
 
     var result = hasher.VerifyHashedPassword(
-        account, account.Password, request.Password);
+        account, account.PasswordHash, request.Password);
 
     if (result == PasswordVerificationResult.Failed)
         return Results.Challenge();
@@ -134,7 +154,9 @@ app.MapGet("/api/me", (ClaimsPrincipal user) =>
 app.MapGet("/api/admin", () =>
 {
     return Results.Ok("Раздел администратора");
-}).RequireAuthorization(policy => policy.RequireAuthenticatedUser().RequireRole("Admin"));
+}).RequireAuthorization(policy => policy.RequireAuthenticatedUser().RequireRole("1"));
+
+
 
 app.Run();
 

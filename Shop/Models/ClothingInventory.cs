@@ -5,17 +5,15 @@ using System.Collections.Generic;
 
 namespace Shop.Models;
 
-public partial class ClothesSize
+public partial class ClothingInventory
 {
-    public int Id { get; set; }
-
-    public int ClothesId { get; set; }
+    public int ClothingId { get; set; }
 
     public int SizeId { get; set; }
 
-    public int Count { get; set; }
+    public int? StockQuantity { get; set; }
 
-    public virtual Clothe Clothes { get; set; }
+    public virtual Clothing Clothing { get; set; }
 
     public virtual Size Size { get; set; }
 }

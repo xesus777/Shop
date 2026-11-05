@@ -15,11 +15,15 @@
    "T4TemplatePath": null,
    "Tables": [
       {
-         "Name": "[dbo].[Clothes]",
+         "Name": "[dbo].[Clothing]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[ClothesSizes]",
+         "Name": "[dbo].[ClothingInventory]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ClothingTypes]",
          "ObjectType": 0
       },
       {
@@ -35,7 +39,11 @@
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[Size]",
+         "Name": "[dbo].[Sizes]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Statuses]",
          "ObjectType": 0
       },
       {

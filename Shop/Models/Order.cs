@@ -9,13 +9,15 @@ public partial class Order
 {
     public int Id { get; set; }
 
-    public DateTime DateTime { get; set; }
-
-    public string Status { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
 
     public int UserId { get; set; }
 
+    public int StatusId { get; set; }
+
     public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+
+    public virtual Status Status { get; set; }
 
     public virtual User User { get; set; }
 }

@@ -17,9 +17,11 @@ public partial class Pr3GlebOmaContext : DbContext
     {
     }
 
-    public virtual DbSet<Clothe> Clothes { get; set; }
+    public virtual DbSet<Clothing> Clothings { get; set; }
 
-    public virtual DbSet<ClothesSize> ClothesSizes { get; set; }
+    public virtual DbSet<ClothingInventory> ClothingInventories { get; set; }
+
+    public virtual DbSet<ClothingType> ClothingTypes { get; set; }
 
     public virtual DbSet<Order> Orders { get; set; }
 
@@ -29,87 +31,111 @@ public partial class Pr3GlebOmaContext : DbContext
 
     public virtual DbSet<Size> Sizes { get; set; }
 
+    public virtual DbSet<Status> Statuses { get; set; }
+
     public virtual DbSet<User> Users { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Data Source=bd-kip.fa.ru;Initial Catalog=Pr3_OmaGleb;User ID=sa;Password=1qaz!QAZ;Trust Server Certificate=True");
+        => optionsBuilder.UseSqlServer("Data Source=bd-kip.fa.ru;Initial Catalog=ClothingStoreDB;User ID=sa;Password=1qaz!QAZ;Trust Server Certificate = True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Clothe>(entity =>
+        modelBuilder.Entity<Clothing>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Clothes__3214EC07B6036AE4");
+            entity.HasKey(e => e.Id).HasName("PK__Clothing__3214EC07087ACC74");
 
-            entity.Property(e => e.Available).HasDefaultValue(true);
+            entity.ToTable("Clothing");
+
+            entity.HasIndex(e => e.IsAvailable, "IX_Clothing_IsAvailable");
+
+            entity.Property(e => e.IsAvailable).HasDefaultValue(true);
             entity.Property(e => e.Name)
                 .IsRequired()
                 .HasMaxLength(150);
             entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.Type)
+            entity.Property(e => e.PurchaseCount).HasDefaultValue(0);
+
+            entity.HasOne(d => d.Type).WithMany(p => p.Clothings)
+                .HasForeignKey(d => d.TypeId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Clothing_Types");
+        });
+
+        modelBuilder.Entity<ClothingInventory>(entity =>
+        {
+            entity.HasKey(e => new { e.ClothingId, e.SizeId });
+
+            entity.ToTable("ClothingInventory");
+
+            entity.Property(e => e.StockQuantity).HasDefaultValue(0);
+
+            entity.HasOne(d => d.Clothing).WithMany(p => p.ClothingInventories)
+                .HasForeignKey(d => d.ClothingId)
+                .HasConstraintName("FK_Inventory_Clothing");
+
+            entity.HasOne(d => d.Size).WithMany(p => p.ClothingInventories)
+                .HasForeignKey(d => d.SizeId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Inventory_Sizes");
+        });
+
+        modelBuilder.Entity<ClothingType>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Clothing__3214EC07925EC6DA");
+
+            entity.HasIndex(e => e.Name, "UQ__Clothing__737584F6C8F12B19").IsUnique();
+
+            entity.Property(e => e.Name)
                 .IsRequired()
                 .HasMaxLength(100);
         });
 
-        modelBuilder.Entity<ClothesSize>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK__ClothesS__3214EC07F08D04C1");
-
-            entity.HasIndex(e => new { e.ClothesId, e.SizeId }, "UQ_Clothes_Size").IsUnique();
-
-            entity.HasOne(d => d.Clothes).WithMany(p => p.ClothesSizes)
-                .HasForeignKey(d => d.ClothesId)
-                .HasConstraintName("FK__ClothesSi__Cloth__59063A47");
-
-            entity.HasOne(d => d.Size).WithMany(p => p.ClothesSizes)
-                .HasForeignKey(d => d.SizeId)
-                .HasConstraintName("FK__ClothesSi__SizeI__59FA5E80");
-        });
-
         modelBuilder.Entity<Order>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Orders__3214EC07016AC344");
+            entity.HasKey(e => e.Id).HasName("PK__Orders__3214EC07DEFE97BA");
 
-            entity.Property(e => e.DateTime)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.Status)
-                .IsRequired()
-                .HasMaxLength(50)
-                .HasDefaultValue("Новый");
+            entity.HasIndex(e => e.UserId, "IX_Orders_UserId");
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetimeoffset())");
+
+            entity.HasOne(d => d.Status).WithMany(p => p.Orders)
+                .HasForeignKey(d => d.StatusId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Orders_Statuses");
 
             entity.HasOne(d => d.User).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Orders__UserId__5EBF139D");
+                .HasConstraintName("FK_Orders_Users");
         });
 
         modelBuilder.Entity<OrderItem>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__OrderIte__3214EC072CF34250");
+            entity.HasKey(e => e.Id).HasName("PK__OrderIte__3214EC0774E5183C");
 
-            entity.Property(e => e.Quantity).HasDefaultValue(1);
+            entity.Property(e => e.PriceAtPurchase).HasColumnType("decimal(10, 2)");
 
-            entity.HasOne(d => d.Clothes).WithMany(p => p.OrderItems)
-                .HasForeignKey(d => d.ClothesId)
+            entity.HasOne(d => d.Clothing).WithMany(p => p.OrderItems)
+                .HasForeignKey(d => d.ClothingId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__OrderItem__Cloth__6383C8BA");
+                .HasConstraintName("FK_OrderItems_Clothing");
 
             entity.HasOne(d => d.Order).WithMany(p => p.OrderItems)
                 .HasForeignKey(d => d.OrderId)
-                .HasConstraintName("FK__OrderItem__Order__628FA481");
+                .HasConstraintName("FK_OrderItems_Orders");
 
             entity.HasOne(d => d.Size).WithMany(p => p.OrderItems)
                 .HasForeignKey(d => d.SizeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__OrderItem__SizeI__6477ECF3");
+                .HasConstraintName("FK_OrderItems_Sizes");
         });
 
         modelBuilder.Entity<Role>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Roles__3214EC07DE613FEF");
+            entity.HasKey(e => e.Id).HasName("PK__Roles__3214EC0779F15B49");
 
-            entity.HasIndex(e => e.Name, "UQ__Roles__737584F6A797F8B1").IsUnique();
+            entity.HasIndex(e => e.Name, "UQ__Roles__737584F6E2A0147D").IsUnique();
 
             entity.Property(e => e.Name)
                 .IsRequired()
@@ -118,38 +144,50 @@ public partial class Pr3GlebOmaContext : DbContext
 
         modelBuilder.Entity<Size>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Size__3214EC07E7E3B782");
+            entity.HasKey(e => e.Id).HasName("PK__Sizes__3214EC072E517A2B");
 
-            entity.ToTable("Size");
+            entity.HasIndex(e => new { e.LetterCode, e.NumberCode }, "UQ_Sizes_Codes").IsUnique();
 
-            entity.Property(e => e.SizeLetter)
+            entity.Property(e => e.LetterCode)
                 .IsRequired()
-                .HasMaxLength(10);
+                .HasMaxLength(10)
+                .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<Status>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Statuses__3214EC0790BE5222");
+
+            entity.HasIndex(e => e.Name, "UQ__Statuses__737584F60B4B463D").IsUnique();
+
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(50);
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Users__3214EC07973019E0");
+            entity.HasKey(e => e.Id).HasName("PK__Users__3214EC07135433C7");
 
-            entity.HasIndex(e => e.Login, "UQ__Users__5E55825B247D1270").IsUnique();
+            entity.HasIndex(e => e.Phone, "UQ__Users__5C7E359E87C53AEC").IsUnique();
 
-            entity.Property(e => e.Address)
-                .IsRequired()
-                .HasMaxLength(500);
+            entity.HasIndex(e => e.Login, "UQ__Users__5E55825B2DA9776A").IsUnique();
+
             entity.Property(e => e.Login)
                 .IsRequired()
                 .HasMaxLength(50);
-            entity.Property(e => e.Password)
+            entity.Property(e => e.PasswordHash)
                 .IsRequired()
-                .HasMaxLength(128);
+                .HasMaxLength(255);
             entity.Property(e => e.Phone)
                 .IsRequired()
-                .HasMaxLength(20);
+                .HasMaxLength(20)
+                .IsUnicode(false);
 
             entity.HasOne(d => d.Role).WithMany(p => p.Users)
                 .HasForeignKey(d => d.RoleId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Users__RoleId__4E88ABD4");
+                .HasConstraintName("FK_Users_Roles");
         });
 
         OnModelCreatingPartial(modelBuilder);

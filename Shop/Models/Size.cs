@@ -9,11 +9,11 @@ public partial class Size
 {
     public int Id { get; set; }
 
-    public string SizeLetter { get; set; }
+    public string LetterCode { get; set; }
 
-    public int SizeNumber { get; set; }
+    public int NumberCode { get; set; }
 
-    public virtual ICollection<ClothesSize> ClothesSizes { get; set; } = new List<ClothesSize>();
+    public virtual ICollection<ClothingInventory> ClothingInventories { get; set; } = new List<ClothingInventory>();
 
     public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 }

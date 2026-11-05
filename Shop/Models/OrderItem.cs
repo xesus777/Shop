@@ -11,13 +11,15 @@ public partial class OrderItem
 
     public int OrderId { get; set; }
 
-    public int ClothesId { get; set; }
+    public int ClothingId { get; set; }
 
     public int SizeId { get; set; }
 
     public int Quantity { get; set; }
 
-    public virtual Clothe Clothes { get; set; }
+    public decimal PriceAtPurchase { get; set; }
+
+    public virtual Clothing Clothing { get; set; }
 
     public virtual Order Order { get; set; }
 

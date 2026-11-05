@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Shop.Models;
 
-public partial class Clothe
+public partial class Clothing
 {
     public int Id { get; set; }
 
@@ -15,13 +15,15 @@ public partial class Clothe
 
     public string Description { get; set; }
 
-    public int PurchaseCount { get; set; }
+    public int? PurchaseCount { get; set; }
 
-    public string Type { get; set; }
+    public bool IsAvailable { get; set; }
 
-    public bool Available { get; set; }
+    public int TypeId { get; set; }
 
-    public virtual ICollection<ClothesSize> ClothesSizes { get; set; } = new List<ClothesSize>();
+    public virtual ICollection<ClothingInventory> ClothingInventories { get; set; } = new List<ClothingInventory>();
 
     public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+
+    public virtual ClothingType Type { get; set; }
 }
