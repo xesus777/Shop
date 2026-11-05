@@ -1,32 +1,58 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Shop.Models;
+using System.Net.Http.Headers;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<Pr3GlebOmaContext>();
 var app = builder.Build();
-
-
-
-var summaries = new[]
+// 
+app.MapGet("/api/Clothes", (Pr3GlebOmaContext context) => Results.Json(context.Clothings));
+app.MapGet("/api/Clothes/search", (string name, Pr3GlebOmaContext context) =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    if (string.IsNullOrWhiteSpace(name))
+    {
+        return Results.BadRequest("Параметр поиска 'name' не можеи быть пустым.");
+    }
 
-app.MapGet("/weatherforecast", () =>
+    // 
+    var foundClothes = context.Clothings
+        .Where(c => c.IsAvailable == true && c.Name.Contains(name))
+        .ToList();
+
+    return Results.Ok(foundClothes);
+});
+// 3. 
+app.MapPost("/api/Users/register", (User newUser, Pr3GlebOmaContext context) =>
 {
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
+    var defaultRole = context.Roles.FirstOrDefault(r => r.Name == "User");
+    if (defaultRole == null) return Results.BadRequest("Поле 'User' не может быть пустым.");
+
+    newUser.RoleId = defaultRole.Id;
+
+
+    var hasher = new PasswordHasher<User>();
+    newUser.PasswordHash = hasher.HashPassword(newUser, newUser.PasswordHash);
+
+    context.Users.Add(newUser);
+    context.SaveChanges();
+
+    return Results.Ok("Пользователь зарегистрирован!");
 });
 
-app.Run();
-
-internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+app.MapGet("/api/Orders/{StatusId}", async (Pr3GlebOmaContext context, int StatusId) =>
 {
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+    Order? order = await context.Orders.FirstOrDefaultAsync(u => u.Id == StatusId);
+        if (order == null) 
+        return Results.NotFound(new { message = "Заказ не найден" });
+    return Results.Json(order);
+}).RequireAuthorization(policy => policy.RequireAuthenticatedUser());
+
+app.MapGet("/api/OrdersByUserId"са4/{UserId}", async (Pr3GlebOmaContext context, int UserId) =>
+{
+    Order? order = await context.Orders.FirstOrDefaultAsync(u => u.Id == UserId);
+    if (order == null)
+        return Results.NotFound(new { message = "Заказ не найден" });
+    return Results.Json(order);
+}).RequireAuthorization(policy => policy.RequireAuthenticatedUser());
+app.Run();

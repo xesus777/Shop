@@ -9,15 +9,17 @@ public partial class User
 {
     public int Id { get; set; }
 
-    public string Phone { get; set; }
-
-    public string Address { get; set; }
-
     public string Login { get; set; }
 
-    public string Password { get; set; }
+    public string PasswordHash { get; set; }
 
-    public bool IsManager { get; set; }
+    public string Phone { get; set; }
+
+    public string DeliveryAddress { get; set; }
+
+    public int RoleId { get; set; }
 
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
+
+    public virtual Role Role { get; set; }
 }
