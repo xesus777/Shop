@@ -26,6 +26,10 @@ foreach (var user in users)
 }
 
 
+    // 
+    var foundClothes = context.Clothings
+        .Where(c => c.IsAvailable == true && c.Name.Contains(name))
+        .ToList();
 
 var key = new SymmetricSecurityKey(RandomNumberGenerator.GetBytes(32));
 
@@ -153,12 +157,37 @@ app.MapGet("/api/me", (ClaimsPrincipal user) =>
 
 app.MapGet("/api/admin", () =>
 {
-    return Results.Ok("������ ��������������");
+    return Results.Ok("Ðàçäåë àäìèíèñòðàòîðà");
 }).RequireAuthorization(policy => policy.RequireAuthenticatedUser().RequireRole("1"));
 
 
+    return Results.Ok(foundClothes);
+});
+// 3. 
+app.MapPost("/api/Users/register", (User newUser, Pr3GlebOmaContext context) =>
+{
+    var defaultRole = context.Roles.FirstOrDefault(r => r.Name == "User");
+    if (defaultRole == null) return Results.BadRequest("Ïîëå 'User' íå ìîæåò áûòü ïóñòûì.");
 
-app.Run();
+    newUser.RoleId = defaultRole.Id;
+
+
+    var hasher = new PasswordHasher<User>();
+    newUser.PasswordHash = hasher.HashPassword(newUser, newUser.PasswordHash);
+
+    context.Users.Add(newUser);
+    context.SaveChanges();
+
+    return Results.Ok("Ïîëüçîâàòåëü çàðåãèñòðèðîâàí!");
+});
+
+app.MapGet("/api/Orders/{StatusId}", async (Pr3GlebOmaContext context, int StatusId) =>
+{
+    Order? order = await context.Orders.FirstOrDefaultAsync(u => u.Id == StatusId);
+        if (order == null) 
+        return Results.NotFound(new { message = "Çàêàç íå íàéäåí" });
+    return Results.Json(order);
+}).RequireAuthorization(policy => policy.RequireAuthenticatedUser());
 
 string CreateToken(User account)
 {
@@ -182,3 +211,11 @@ string CreateToken(User account)
 
 public record LoginRequest(string Login, string Password);
 
+app.MapGet("/api/OrdersByUserId/{UserId}", async (Pr3GlebOmaContext context, int UserId) =>
+{
+    Order? order = await context.Orders.FirstOrDefaultAsync(u => u.Id == UserId);
+    if (order == null)
+        return Results.NotFound(new { message = "Çàêàç íå íàéäåí" });
+    return Results.Json(order);
+}).RequireAuthorization(policy => policy.RequireAuthenticatedUser());
+app.Run();
